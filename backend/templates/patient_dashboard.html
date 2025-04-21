@@ -1,8 +1,80 @@
+{# ======================================== #}
+{# Updated patient_dashboard.html #}
+{# ======================================== #}
 {% extends "dashboard.html" %}
-
 {% block content %}
-  <h2 class="mb-3">Welcome, {{ username }} (Patient)</h2>
-  <p>Your device is collecting stress data. View your reports below:</p>
-  <!-- Placeholder for future data -->
-  <div class="alert alert-info">No reports yet. Connect your device to start monitoring.</div>
+<div class="container mt-4">
+    <h3 class="mb-3">Welcome, {{ username }}</h3>
+
+    <!-- Collect Button -->
+    <form id="collect-form">
+        <button class="btn btn-primary mb-2" type="submit">Collect Data</button>
+    </form>
+    <div id="status" class="text-info mb-4"></div>
+
+    <!-- Report Table -->
+    <h5>Recent Reports:</h5>
+    {% if reports %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>HR</th>
+                    <th>HRV</th>
+                    <th>GSR</th>
+                    <th>Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td>{{ r.timestamp }}</td>
+                    <td>{{ r.heart_rate|default('N/A') }}</td>
+                    <td>{{ r.hrv|default('N/A') }}</td>
+                    <td>{{ r.gsr_mean|default('N/A') }}</td>
+                    <td>{{ r.notes|default('No report') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No reports yet.</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- ChatGPT Q&A Interface -->
+    <h5>Ask ChatGPT</h5>
+    <form id="chat-form">
+        <input type="text" id="question" class="form-control mb-2" placeholder="Ask about your stress...">
+        <button class="btn btn-secondary" type="submit">Ask</button>
+    </form>
+    <pre id="chat-response" class="bg-light p-3"></pre>
+</div>
+
+<script>
+// Collect button
+const form = document.getElementById("collect-form");
+form.onsubmit = async function(e) {
+    e.preventDefault();
+    document.getElementById("status").innerText = "Collecting data...";
+    const res = await fetch("/collect", { method: "POST" });
+    const data = await res.json();
+    document.getElementById("status").innerText = data.message;
+};
+
+// ChatGPT form
+const chatForm = document.getElementById("chat-form");
+chatForm.onsubmit = async function(e) {
+    e.preventDefault();
+    const q = document.getElementById("question").value;
+    const res = await fetch("/ask", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `question=${encodeURIComponent(q)}`
+    });
+    const data = await res.json();
+    document.getElementById("chat-response").innerText = data.reply || data.error;
+};
+</script>
 {% endblock %}
