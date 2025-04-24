@@ -21,14 +21,14 @@ def signup():
         full_name = request.form.get('full_name')
         email = request.form.get('email')
         contact_number = request.form.get('contact_number')
+        ssn = request.form.get('ssn')
+        address = request.form.get('address')
 
         # Role-specific fields
         age = gender = condition = specialty = hospital = None
         if role == 'patient':
             age = request.form.get('age')
-            ssn = request.form.get('ssn')
             gender = request.form.get('gender')
-            address = request.form.get('address')
         elif role == 'doctor':
             specialty = request.form.get('specialty')
             hospital = request.form.get('hospital')
@@ -152,8 +152,8 @@ def collect_data():
         return jsonify({"message": "Unauthorized"}), 401
 
     user_id = session['user_id']
-    Thread(target=collect_sensor_data, args=(user_id, 30, current_app._get_current_object())).start()
-    return jsonify({"message": "Collecting 30 seconds of data..."})
+    Thread(target=collect_sensor_data, args=(user_id, 60, current_app._get_current_object())).start()
+    return jsonify({"message": "Collecting 60 seconds of data..."})
 
 # ------------------------
 # Doctor Dashboard
@@ -162,7 +162,38 @@ def collect_data():
 def doctor_dashboard():
     if 'user_id' not in session or session['role'] != 'doctor':
         return redirect(url_for('auth.login'))
-    return render_template('doctor_dashboard.html', username=session['username'])
+
+    doctor_id = session['user_id']
+    # Get list of patient IDs assigned to this doctor
+    mappings = DoctorPatientMap.query.filter_by(doctor_id=doctor_id).all()
+    patient_ids = [m.patient_id for m in mappings]
+    patients = User.query.filter(User.id.in_(patient_ids)).all()
+
+    return render_template('doctor_dashboard.html', username=session['username'], patients=patients)
+
+# ------------------------
+# Read only patient dashboard
+# ------------------------
+@auth.route('/dashboard/patient/<int:patient_id>')
+def view_patient_dashboard(patient_id):
+    if 'user_id' not in session or session['role'] != 'doctor':
+        return redirect(url_for('auth.login'))
+
+    # Confirm this patient is assigned to this doctor
+    mapping = DoctorPatientMap.query.filter_by(doctor_id=session['user_id'], patient_id=patient_id).first()
+    if not mapping:
+        return "Unauthorized", 403
+
+    from report_utils import generate_single_report  # if needed
+    records = SensorData.query.filter_by(user_id=patient_id).order_by(SensorData.timestamp.desc()).limit(10).all()
+    patient = User.query.get(patient_id)
+
+    return render_template(
+        'patient_dashboard.html',
+        username=patient.username,
+        reports=records,
+        readonly=True
+    )
 
 # ------------------------
 # Logout

@@ -1,8 +1,18 @@
 {% extends "dashboard.html" %}
-
 {% block content %}
   <h2 class="mb-3">Welcome, Dr. {{ username }}</h2>
-  <p>Here are your assigned patients:</p>
-  <!-- Placeholder for future patient list -->
-  <div class="alert alert-info">No patients assigned yet.</div>
+
+  {% if patients %}
+    <p>Here are your assigned patients:</p>
+    <ul class="list-group">
+      {% for p in patients %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ p.full_name }} ({{ p.username }})
+          <a class="btn btn-sm btn-primary" href="{{ url_for('auth.view_patient_dashboard', patient_id=p.id) }}">View Dashboard</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-info">No patients assigned yet.</div>
+  {% endif %}
 {% endblock %}

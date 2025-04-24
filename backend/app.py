@@ -15,7 +15,7 @@ db.init_app(app)
 # Register routes
 app.register_blueprint(auth)
 
-@app.route('/login')
+@app.route('/')
 def index():
     return 'App running!'
 

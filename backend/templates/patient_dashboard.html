@@ -7,10 +7,12 @@
     <h3 class="mb-3">Welcome, {{ username }}</h3>
 
     <!-- Collect Button -->
+    {% if not readonly %}
     <form id="collect-form">
         <button class="btn btn-primary mb-2" type="submit">Collect Data</button>
     </form>
     <div id="status" class="text-info mb-4"></div>
+    {% endif %}
 
     <!-- Report Table -->
     <h5>Recent Reports:</h5>
@@ -44,12 +46,14 @@
     <hr>
 
     <!-- ChatGPT Q&A Interface -->
+    {% if not readonly %}
     <h5>Ask ChatGPT</h5>
     <form id="chat-form">
         <input type="text" id="question" class="form-control mb-2" placeholder="Ask about your stress...">
         <button class="btn btn-secondary" type="submit">Ask</button>
     </form>
     <pre id="chat-response" class="bg-light p-3"></pre>
+    {% endif %}
 </div>
 
 <script>

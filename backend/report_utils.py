@@ -2,7 +2,8 @@ import openai
 import os
 
 # 🔐 Read from environment variable only
-openai.api_type = os.environ.get("OPENAI_API_KEY")
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_type = "open_ai"
 
 # ----------------------------
 # Single-Row GPT Report
